@@ -18,16 +18,15 @@ def _parse_args():
     parser.add_argument('--epochs', type=int, default=EPOCHS)
     parser.add_argument('--batch_size', type=int, default=BATCH_SIZE)
     parser.add_argument('--learning_rate', type=float, default=LEARNING_RATE)    
-
+    parser.add_argument('--dataset_path', type=str)
+    
     # Data, model, and output directories
     # model_dir is always passed in from SageMaker. By default this is a S3 path under the default bucket.
     parser.add_argument('--model_dir', type=str)
     parser.add_argument('--sm-model-dir', type=str, default=os.environ.get('SM_MODEL_DIR'))
     parser.add_argument('--train', type=str, default=os.environ.get('SM_CHANNEL_TRAINING'))
     parser.add_argument('--model_version', type=str, default=MODEL_VERSION)
-    
-#     parser.add_argument('--hosts', type=list, default=json.loads(os.environ.get('SM_HOSTS')))
-#     parser.add_argument('--current-host', type=str, default=os.environ.get('SM_CURRENT_HOST'))
+
 
     return parser.parse_known_args()
 
@@ -49,12 +48,21 @@ def create_model(learning_rate, num_classes):
     return model
 
 
-def get_datasets(dataset_name):
+def get_datasets(dataset_name, dataset_path):
     tfds.disable_progress_bar()
+
+#     (ds_train, ds_test), ds_info = tfds.load(
+#         dataset_name,
+#         split=['train', 'test'],
+#         shuffle_files=True,
+#         as_supervised=True,
+#         with_info=True
+#     )    
 
     (ds_train, ds_test), ds_info = tfds.load(
         dataset_name,
         split=['train', 'test'],
+        data_dir=dataset_path,
         shuffle_files=True,
         as_supervised=True,
         with_info=True
@@ -92,10 +100,15 @@ if __name__ == "__main__":
     print(
         f"\nBatch Size = {batch_size}, Epochs = {epochs}, Learning Rate = {learning_rate}\n")
 
-    (ds_train, ds_test), ds_info = get_datasets(TF_DATASET_NAME)
+    print(
+        f"\nmodel_dir = {args.model_dir}, \ndataset_path = {args.dataset_path}")
+
+    
+    (ds_train, ds_test), ds_info = get_datasets(TF_DATASET_NAME, args.dataset_path)
     NUM_EXAMPLES = ds_info.splits['train'].num_examples
     NUM_CLASSES = ds_info.features['label'].num_classes
-
+    print(
+        f"\nnum_classes = {NUM_CLASSES} \n")
 
     train_preprocessed = train_preprocess(ds_train, batch_size, NUM_EXAMPLES)
     test_preprocessed = test_preprocess(ds_test, batch_size)
