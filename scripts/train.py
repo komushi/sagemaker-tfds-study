@@ -1,10 +1,20 @@
 import argparse
 import os
+
 import tensorflow.compat.v2 as tf
 import tensorflow_datasets as tfds
 
+from tensorflow.keras.models import Sequential
+from tensorflow.keras.layers import Dense, Dropout, Flatten
+from tensorflow.keras.layers import Conv2D, MaxPooling2D
+from tensorflow.keras.losses import sparse_categorical_crossentropy
+from tensorflow.keras.optimizers import Adam
 
-EPOCHS = 6
+tfds.disable_progress_bar()
+tf.enable_v2_behavior()
+
+
+EPOCHS = 15
 BATCH_SIZE = 128
 LEARNING_RATE = 0.001
 TF_AUTOTUNE = tf.data.experimental.AUTOTUNE
@@ -31,13 +41,18 @@ def _parse_args():
     return parser.parse_known_args()
 
 def create_model(learning_rate, num_classes):
-    optimizer = tf.keras.optimizers.Adam(learning_rate=learning_rate)
+    optimizer = Adam(learning_rate=learning_rate)
 
-    model = tf.keras.models.Sequential([
-      tf.keras.layers.Flatten(input_shape=(28, 28, 1)),
-      tf.keras.layers.Dense(128, activation='relu'),
-      tf.keras.layers.Dense(num_classes, activation='softmax')
-    ])
+    model = Sequential()
+    model.add(Conv2D(32, kernel_size=(3, 3), activation='relu', input_shape=(28, 28, 1)))
+    model.add(MaxPooling2D(pool_size=(2, 2)))
+    model.add(Dropout(0.25))
+    model.add(Conv2D(64, kernel_size=(3, 3), activation='relu'))
+    model.add(MaxPooling2D(pool_size=(2, 2)))
+    model.add(Dropout(0.25))
+    model.add(Flatten())
+    model.add(Dense(256, activation='relu'))
+    model.add(Dense(10, activation='softmax'))
 
     model.compile(optimizer=optimizer,
                   loss='sparse_categorical_crossentropy', 

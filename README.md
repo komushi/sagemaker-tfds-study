@@ -7,3 +7,6 @@ https://www.tensorflow.org/tutorials/keras/save_and_load
 
 ### 3. Using the saved model
 https://www.tensorflow.org/guide/saved_model
+
+How to predict new samples with your Keras model?
+https://www.machinecurve.com/index.php/2020/02/21/how-to-predict-new-samples-with-your-keras-model/
